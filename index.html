@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Click Before Frames</title>
+<meta name="description" content="Click Before Frames: a predictive input buffer mod for Geometry Dash 2.2 (Geode). Early clicks are delayed to the moment they work.">
+<link rel="icon" href="logo.png">
+<style>
+  :root {
+    --bg: #0f0a1a;
+    --panel: #1a1229;
+    --panel-2: #231836;
+    --line: #34264d;
+    --text: #ece6f7;
+    --muted: #a99bc4;
+    --accent: #a66bff;
+    --accent-2: #d3a8ff;
+    --good: #6fdc9b;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: var(--accent-2); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(15, 10, 26, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; align-items: center; gap: 20px; height: 60px; }
+  nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); text-decoration: none; }
+  nav .brand img { width: 30px; height: 30px; border-radius: 8px; }
+  nav .links { margin-left: auto; display: flex; gap: 18px; font-size: 15px; }
+  nav .links a { color: var(--muted); text-decoration: none; }
+  nav .links a:hover { color: var(--text); }
+
+  header.hero { padding: 80px 0 60px; text-align: center; }
+  .hero img { width: 120px; height: 120px; border-radius: 26px; box-shadow: 0 0 60px rgba(166, 107, 255, 0.35); }
+  .hero h1 { font-size: clamp(34px, 6vw, 56px); margin: 24px 0 8px; letter-spacing: -0.02em; }
+  .hero p.tag { font-size: clamp(17px, 2.4vw, 21px); color: var(--muted); max-width: 640px; margin: 0 auto 30px; }
+  .btn {
+    display: inline-block; padding: 13px 26px; border-radius: 999px;
+    background: var(--accent); color: #fff; font-weight: 700; text-decoration: none;
+  }
+  .btn:hover { background: #b783ff; }
+  .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); margin-left: 8px; }
+  .meta { margin-top: 18px; color: var(--muted); font-size: 14px; }
+
+  section { padding: 56px 0; border-top: 1px solid var(--line); }
+  section h2 { font-size: 30px; margin: 0 0 10px; letter-spacing: -0.01em; }
+  section p.lead { color: var(--muted); margin: 0 0 30px; max-width: 700px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  .steps { counter-reset: s; display: grid; gap: 14px; }
+  .steps .card { padding-left: 64px; position: relative; }
+  .steps .card::before {
+    counter-increment: s; content: counter(s);
+    position: absolute; left: 20px; top: 20px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--panel-2); border: 1px solid var(--accent);
+    display: grid; place-items: center; font-weight: 700; color: var(--accent-2);
+  }
+
+  .price {
+    max-width: 420px; margin: 0 auto; text-align: center;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--accent); border-radius: 20px; padding: 32px 26px;
+  }
+  .price .amount { font-size: 48px; font-weight: 800; margin: 6px 0; }
+  .price ul { text-align: left; padding: 0; list-style: none; margin: 22px 0 26px; }
+  .price li { padding: 7px 0 7px 28px; position: relative; border-bottom: 1px solid var(--line); }
+  .price li::before { content: "\2713"; position: absolute; left: 4px; color: var(--good); font-weight: 700; }
+
+  .note {
+    background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    border-radius: 10px; padding: 16px 18px; color: var(--muted);
+  }
+  .note strong { color: var(--text); }
+
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+
+  .legal h3 { margin: 26px 0 6px; font-size: 19px; }
+  .legal p, .legal li { color: var(--muted); font-size: 15px; }
+
+  footer { border-top: 1px solid var(--line); padding: 30px 0 50px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; }
+
+  @media (max-width: 640px) {
+    nav .links { display: none; }
+    .btn.ghost { margin: 10px 0 0; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#"><img src="logo.png" alt="">Click Before Frames</a>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#legal">Terms &amp; refunds</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <img src="logo.png" alt="Click Before Frames logo">
+    <h1>Click Before Frames</h1>
+    <p class="tag">A predictive input buffer for Geometry Dash. Clicked a little too early? It waits for the moment your click actually works.</p>
+    <a class="btn" href="#pricing">Get it</a>
+    <a class="btn ghost" href="#how">How it works</a>
+    <p class="meta">Geode mod &middot; Geometry Dash 2.2081 &middot; Windows</p>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <h2>Features</h2>
+    <p class="lead">Every click is tested ahead of time with a hidden copy of your player that runs the game's own physics. If clicking now would crash and clicking a few frames later wouldn't, your click is held until then.</p>
+    <div class="grid">
+      <div class="card"><h3>Every game mode</h3><p>Cube, ship, ball, UFO, wave, robot, spider and swing, each with its own rules for what counts as a safe input.</p></div>
+      <div class="card"><h3>Orbs, pads and portals</h3><p>Clicks are moved onto orbs, pads are followed, and predictions keep going through mode, teleport, dual and solo portals.</p></div>
+      <div class="card"><h3>Moving objects and triggers</h3><p>Spikes and blocks moved by move, rotate, toggle and spawn triggers are predicted where they will be, not where they are now.</p></div>
+      <div class="card"><h3>Smart robot and spider</h3><p>Robot hold lengths and spider flips are chosen so the whole jump lands safely, not just the first frames.</p></div>
+      <div class="card"><h3>Level memory</h3><p>Learns which timings work at each spot of a level over your runs, and gives extra time to the spots where you keep dying.</p></div>
+      <div class="card"><h3>Built for high refresh rates</h3><p>Works with Click Between Frames and custom tick rates. A time budget keeps every decision fast, and long searches carry on over the next frames instead of stuttering.</p></div>
+      <div class="card"><h3>Your choice of stage</h3><p>From 0.5 to 8 frames of buffer or a custom amount, switched with one key. Low latency mode keeps it to a single frame.</p></div>
+      <div class="card"><h3>Training mode and tools</h3><p>Hints instead of saves, a path view, a death heatmap and a live log that explains every decision.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="lead">No macros, no recorded inputs. It only ever uses clicks you made, and it can only make them later, never earlier.</p>
+    <div class="steps">
+      <div class="card"><h3>You click</h3><p>The mod looks at where you are right now: speed, mode, gravity, size and what's ahead of you.</p></div>
+      <div class="card"><h3>A hidden ghost tries it</h3><p>An invisible copy of your player runs the next second of the level, once for clicking now and again for each later timing.</p></div>
+      <div class="card"><h3>Your click lands when it works</h3><p>If clicking now survives, nothing changes. If a slightly later click survives and clicking now doesn't, your click is held for exactly that long.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <h2 style="text-align:center">Pricing</h2>
+    <p class="lead" style="text-align:center;margin-left:auto;margin-right:auto">One payment, no subscription.</p>
+    <div class="price">
+      <div>Click Before Frames</div>
+      <div class="amount">3 €</div>
+      <div class="meta">one-time payment</div>
+      <ul>
+        <li>License key for 1 PC</li>
+        <li>All future updates for GD 2.2</li>
+        <li>Move your license to a new PC on request</li>
+        <li>Support by email</li>
+      </ul>
+      <a class="btn" href="mailto:rares1336@gmail.com?subject=Click%20Before%20Frames">Coming soon</a>
+      <p class="meta">Checkout opens soon, handled securely by Lemon Squeezy. Your key arrives by email right after payment.</p>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2>FAQ</h2>
+    <details><summary>What do I need?</summary><p>Geometry Dash 2.2081 on Windows with the Geode mod loader installed. You install the mod file you get after buying, start the game and enter your license key once.</p></details>
+    <details><summary>Does it need internet?</summary><p>Only to activate your key the first time and for a short check every few days. It keeps working offline for a few days between checks.</p></details>
+    <details><summary>Can I use it on more than one PC?</summary><p>One license is for one PC. If you get a new PC, email us and we'll move your license over.</p></details>
+    <details><summary>Does it play for me?</summary><p>No. It never makes a click you didn't make. It only holds an early click until the moment it works. Auto-click and auto-release helpers are off by default and only for practice.</p></details>
+    <details><summary>Will it make me lag?</summary><p>Each decision has a strict time limit (a few milliseconds by default), and a performance mode is included for slower PCs.</p></details>
+  </div>
+</section>
+
+<section id="fair">
+  <div class="wrap">
+    <div class="note"><strong>Fair use:</strong> Click Before Frames changes when your inputs reach the game. Use it for practice and your own enjoyment. Don't use it for runs you submit to leaderboards, the Demon List or verification, or anywhere else that doesn't allow input-assist mods.</div>
+  </div>
+</section>
+
+<section id="legal" class="legal">
+  <div class="wrap">
+    <h2>Terms, refunds and privacy</h2>
+
+    <h3>License</h3>
+    <ul>
+      <li>Each purchase gives you one personal license key for one PC.</li>
+      <li>Sharing, reselling or publishing your key or the mod file isn't allowed. Keys used on more PCs than allowed may be switched off.</li>
+      <li>Click Before Frames is a fan-made mod. It isn't affiliated with or endorsed by RobTop Games or the Geode team.</li>
+    </ul>
+
+    <h3>Refunds</h3>
+    <p>If the mod doesn't work on your PC and we can't fix it, you can get a full refund within 14 days of purchase. Email us with your order number. Refunded keys are switched off.</p>
+
+    <h3>Privacy</h3>
+    <p>To check your license, the mod sends your license key and an anonymous ID for your PC to our license provider. Nothing else leaves your PC: no gameplay, no files, no personal data. Payments are handled by Lemon Squeezy, which receives your payment details and email; we never see your card.</p>
+
+    <h3>Contact</h3>
+    <p>Questions, support or refunds: <a href="mailto:rares1336@gmail.com">rares1336@gmail.com</a></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 BASU &middot; Click Before Frames</span>
+    <span>Geometry Dash is a trademark of RobTop Games.</span>
+  </div>
+</footer>
+
+</body>
+</html>
